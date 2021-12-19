@@ -1,0 +1,334 @@
+{\rtf1\fbidis\ansi\deff0\nouicompat{\fonttbl{\f0\fnil\fcharset0 Calibri;}{\f1\fnil\fcharset1 Segoe UI Symbol;}{\f2\fnil Calibri;}{\f3\fnil\fcharset178 Calibri;}{\f4\fnil\fcharset1 Segoe UI Symbol;}{\f5\fnil\fcharset1 Segoe UI Emoji;}}
+{\*\generator Riched20 10.0.19041}\viewkind4\uc1 
+\pard\ltrpar\sa200\sl276\slmult1\f0\fs22\lang9 import asyncio\par
+import importlib\par
+import os\par
+import re\par
+\par
+from config import LOG_GROUP_ID\par
+from pyrogram import filters\par
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup\par
+from rich.console import Console\par
+from rich.table import Table\par
+from youtubesearchpython import VideosSearch\par
+\par
+from Yukki import (ASSID, ASSMENTION, ASSNAME, ASSUSERNAME, BOT_ID, BOT_NAME,\par
+                   BOT_USERNAME, SUDOERS, app, db, userbot)\par
+from Yukki.Core.Logger.Log import (startup_delete_last, startup_edit_last,\par
+                                   startup_send_new)\par
+from Yukki.Core.PyTgCalls.Yukki import run\par
+from Yukki.Database import get_active_chats, get_sudoers, remove_active_chat\par
+from Yukki.Inline import private_panel\par
+from Yukki.Plugins import ALL_MODULES\par
+from Yukki.Utilities.inline import paginate_modules\par
+\par
+loop = asyncio.get_event_loop()\par
+console = Console()\par
+HELPABLE = \{\}\par
+\par
+\par
+async def initiate_bot():\par
+    with console.status(\par
+        "[magenta] Booting up The Yukki Music Bot...",\par
+    ) as status:\par
+        console.print("\f1\u9484?\f2  \f0 [red]Clearing MongoDB cache...")\par
+        try:\par
+            chats = await get_active_chats()\par
+            for chat in chats:\par
+                chat_id = int(chat["chat_id"])\par
+                await remove_active_chat(chat_id)\par
+        except Exception as e:\par
+            console.print("[red] Error while clearing Mongo DB.")\par
+        console.print("\f1\u9492?\f2  \f0 [green]MongoDB Cleared Successfully!\\n\\n")\par
+        ____ = await startup_send_new("Importing All Plugins...")\par
+        status.update(\par
+            status="[bold blue]Scanning for Plugins", spinner="earth"\par
+        )\par
+        await asyncio.sleep(1.7)\par
+        console.print("Found \{\} Plugins".format(len(ALL_MODULES)) + "\\n")\par
+        status.update(\par
+            status="[bold red]Importing Plugins...",\par
+            spinner="bouncingBall",\par
+            spinner_style="yellow",\par
+        )\par
+        await asyncio.sleep(1.2)\par
+        for all_module in ALL_MODULES:\par
+            imported_module = importlib.import_module(\par
+                "Yukki.Plugins." + all_module\par
+            )\par
+            if (\par
+                hasattr(imported_module, "__MODULE__")\par
+                and imported_module.__MODULE__\par
+            ):\par
+                imported_module.__MODULE__ = imported_module.__MODULE__\par
+                if (\par
+                    hasattr(imported_module, "__HELP__")\par
+                    and imported_module.__HELP__\par
+                ):\par
+                    HELPABLE[\par
+                        imported_module.__MODULE__.lower()\par
+                    ] = imported_module\par
+            console.print(\par
+                f">> [bold cyan]Successfully imported: [green]\{all_module\}.py"\par
+            )\par
+            await asyncio.sleep(0.2)\par
+        console.print("")\par
+        _____ = await startup_edit_last(____, "Finalizing...")\par
+        status.update(\par
+            status="[bold blue]Importation Completed!",\par
+        )\par
+        await asyncio.sleep(2.4)\par
+        await startup_delete_last(_____)\par
+    console.print(\par
+        "[bold green]Congrats!! Yukki Music Bot has started successfully!\\n"\par
+    )\par
+    try:\par
+        await app.send_message(\par
+            LOG_GROUP_ID,\par
+            "<b>Congrats!! Music Bot has started successfully!</b>",\par
+        )\par
+    except Exception as e:\par
+        print(\par
+            "Bot has failed to access the log Channel. Make sure that you have added your bot to your log channel and promoted as admin!"\par
+        )\par
+        console.print(f"\\n[red]Stopping Bot")\par
+        return\par
+    a = await app.get_chat_member(LOG_GROUP_ID, BOT_ID)\par
+    if a.status != "administrator":\par
+        print("Promote Bot as Admin in Logger Channel")\par
+        console.print(f"\\n[red]Stopping Bot")\par
+        return\par
+    try:\par
+        await userbot.send_message(\par
+            LOG_GROUP_ID,\par
+            "<b>Congrats!! Assistant has started successfully!</b>",\par
+        )\par
+    except Exception as e:\par
+        print(\par
+            "Assistant Account has failed to access the log Channel. Make sure that you have added your bot to your log channel and promoted as admin!"\par
+        )\par
+        console.print(f"\\n[red]Stopping Bot")\par
+        return\par
+    try:\par
+        await userbot.join_chat("OfficialYukki")\par
+    except:\par
+        pass\par
+    console.print(f"\\n\f1\u9484?\f0 [red] Bot Started as \{BOT_NAME\}!")\par
+    console.print(f"\f1\u9500?\f0 [green] ID :- \{BOT_ID\}!")\par
+    console.print(f"\f1\u9500?\f0 [red] Assistant Started as \{ASSNAME\}!")\par
+    console.print(f"\f1\u9492?\f0 [green] ID :- \{ASSID\}!")\par
+    await run()\par
+    console.print(f"\\n[red]Stopping Bot")\par
+\par
+\par
+home_text_pm = f"""\f3\rtlch\lang3073\'e3\'d1\'cd\'c8\'c7 \'c8\'df\f0\ltrch\lang9  ,\par
+\f3\rtlch\lang3073\'e3\'d1\'cd\'c8\'c7 \'c8\'df \'c7\'e4\'c7 \'c7\'d3\'e3\'ed\f0\ltrch\lang9\{BOT_NAME\}.\par
+\f3\rtlch\lang3073\'e6\'d9\'ed\'dd\'ca\'ed \'ca\'d4\'db\'ed\'e1 \'c7\'e1\'c7\'db\'c7\'e4\'ed \'dd\'ed \'c7\'e1\'e3\'cc\'e3\'e6\'da\'c7\'ca \'dd\'ed \'c7\'e1\'e3\'df\'c7\'e1\'e3\'c7\'ca \'c7\'e1\'d5\'e6\'ca\'ed\'e5\f0\ltrch\lang9\par
+\par
+\f3\rtlch\lang3073\'ed\'e6\'d2\'d1 \'c7\'e1\'e3\'d8\'e6\'d1\f0\ltrch\lang1033  \lang9 [RINO\f2 ](https://t.me/libcubehawk)\f0  / """\par
+\par
+\par
+@app.on_message(filters.command("help") & filters.private)\par
+async def help_command(_, message):\par
+    text, keyboard = await help_parser(message.from_user.mention)\par
+    await app.send_message(message.chat.id, text, reply_markup=keyboard)\par
+\par
+\par
+@app.on_message(filters.command("start") & filters.private)\par
+async def start_command(_, message):\par
+    if len(message.text.split()) > 1:\par
+        name = (message.text.split(None, 1)[1]).lower()\par
+        if name[0] == "s":\par
+            sudoers = await get_sudoers()\par
+            text = "**__Sudo Users List of Bot:-__**\\n\\n"\par
+            j = 0\par
+            for count, user_id in enumerate(sudoers, 1):\par
+                try:\par
+                    user = await app.get_users(user_id)\par
+                    user = (\par
+                        user.first_name if not user.mention else user.mention\par
+                    )\par
+                except Exception:\par
+                    continue\par
+                text += f"\f1\u10148?\f2  \f0\{user\}\\n"\par
+                j += 1\par
+            if j == 0:\par
+                await message.reply_text("No Sudo Users")\par
+            else:\par
+                await message.reply_text(text)\par
+        if name == "help":\par
+            text, keyboard = await help_parser(message.from_user.mention)\par
+            await message.delete()\par
+            return await app.send_text(\par
+                message.chat.id,\par
+                text,\par
+                reply_markup=keyboard,\par
+            )\par
+        if name[0] == "i":\par
+            m = await message.reply_text("\f4\u-10179?\u-8946?\f2  \f0 Fetching Info!")\par
+            query = (str(name)).replace("info_", "", 1)\par
+            query = f"https://www.youtube.com/watch?v=\{query\}"\par
+            results = VideosSearch(query, limit=1)\par
+            for result in results.result()["result"]:\par
+                title = result["title"]\par
+                duration = result["duration"]\par
+                views = result["viewCount"]["short"]\par
+                thumbnail = result["thumbnails"][0]["url"].split("?")[0]\par
+                channellink = result["channel"]["link"]\par
+                channel = channel = result["channel"]["name"]\par
+                link = result["link"]\par
+                published = result["publishedTime"]\par
+            searched_text = f"""\par
+\f4\u-10179?\u-8947?\f0 __**Video Track Information**__\par
+\par
+\f5\u10055?\u-497?\f0 **Title:** \{title\}\par
+\par
+\f1\u9203?\f0 **Duration:** \{duration\} Mins\par
+\f4\u-10179?\u-9152?\f0 **Views:** `\{views\}`\par
+\f1\u9200?\f0 **Published Time:** \{published\}\par
+\f4\u-10180?\u-8283?\f0 **Channel Name:** \{channel\}\par
+\f4\u-10179?\u-9010?\f0 **Channel Link:** [Visit From Here](\{channellink\})\par
+\f4\u-10179?\u-8937?\f0 **Video Link:** [Link](\{link\})\par
+\par
+\f5\u9889?\u-497?\f2  \f0 __Searched Powered By \{BOT_NAME\}t__"""\par
+            key = InlineKeyboardMarkup(\par
+                [\par
+                    [\par
+                        InlineKeyboardButton(\par
+                            text="\f4\u-10180?\u-8283?\f2  \f0 Watch Youtube Video", url=f"\{link\}"\par
+                        ),\par
+                        InlineKeyboardButton(\par
+                            text="\f4\u-10179?\u-8956?\f2  \f0 Close", callback_data="close"\par
+                        ),\par
+                    ],\par
+                ]\par
+            )\par
+            await m.delete()\par
+            return await app.send_photo(\par
+                message.chat.id,\par
+                photo=thumbnail,\par
+                caption=searched_text,\par
+                parse_mode="markdown",\par
+                reply_markup=key,\par
+            )\par
+    out = private_panel()\par
+    return await message.reply_text(\par
+        home_text_pm,\par
+        reply_markup=InlineKeyboardMarkup(out[1]),\par
+    )\par
+\par
+\par
+async def help_parser(name, keyboard=None):\par
+    if not keyboard:\par
+        keyboard = InlineKeyboardMarkup(paginate_modules(0, HELPABLE, "help"))\par
+    return (\par
+        """Hello \{first_name\},\par
+\par
+Click on the buttons for more information.\par
+\par
+All commands can be used with: /\par
+""".format(\par
+            first_name=name\par
+        ),\par
+        keyboard,\par
+    )\par
+\par
+\par
+@app.on_callback_query(filters.regex("shikhar"))\par
+async def shikhar(_, CallbackQuery):\par
+    text, keyboard = await help_parser(CallbackQuery.from_user.mention)\par
+    await CallbackQuery.message.edit(text, reply_markup=keyboard)\par
+\par
+\par
+@app.on_callback_query(filters.regex(r"help_(.*?)"))\par
+async def help_button(client, query):\par
+    home_match = re.match(r"help_home\\((.+?)\\)", query.data)\par
+    mod_match = re.match(r"help_module\\((.+?)\\)", query.data)\par
+    prev_match = re.match(r"help_prev\\((.+?)\\)", query.data)\par
+    next_match = re.match(r"help_next\\((.+?)\\)", query.data)\par
+    back_match = re.match(r"help_back", query.data)\par
+    create_match = re.match(r"help_create", query.data)\par
+    top_text = f"""Hello \{query.from_user.first_name\},\par
+\par
+Click on the buttons for more information.\par
+\par
+All commands can be used with: /\par
+ """\par
+    if mod_match:\par
+        module = mod_match.group(1)\par
+        text = (\par
+            "\{\} **\{\}**:\\n".format(\par
+                "Here is the help for", HELPABLE[module].__MODULE__\par
+            )\par
+            + HELPABLE[module].__HELP__\par
+        )\par
+        key = InlineKeyboardMarkup(\par
+            [\par
+                [\par
+                    InlineKeyboardButton(\par
+                        text="\f5\u8618?\u-497?\f2  \f0 Back", callback_data="help_back"\par
+                    ),\par
+                    InlineKeyboardButton(\par
+                        text="\f4\u-10179?\u-8956?\f2  \f0 Close", callback_data="close"\par
+                    ),\par
+                ],\par
+            ]\par
+        )\par
+\par
+        await query.message.edit(\par
+            text=text,\par
+            reply_markup=key,\par
+            disable_web_page_preview=True,\par
+        )\par
+    elif home_match:\par
+        out = private_panel()\par
+        await app.send_message(\par
+            query.from_user.id,\par
+            text=home_text_pm,\par
+            reply_markup=InlineKeyboardMarkup(out[1]),\par
+        )\par
+        await query.message.delete()\par
+    elif prev_match:\par
+        curr_page = int(prev_match.group(1))\par
+        await query.message.edit(\par
+            text=top_text,\par
+            reply_markup=InlineKeyboardMarkup(\par
+                paginate_modules(curr_page - 1, HELPABLE, "help")\par
+            ),\par
+            disable_web_page_preview=True,\par
+        )\par
+\par
+    elif next_match:\par
+        next_page = int(next_match.group(1))\par
+        await query.message.edit(\par
+            text=top_text,\par
+            reply_markup=InlineKeyboardMarkup(\par
+                paginate_modules(next_page + 1, HELPABLE, "help")\par
+            ),\par
+            disable_web_page_preview=True,\par
+        )\par
+\par
+    elif back_match:\par
+        await query.message.edit(\par
+            text=top_text,\par
+            reply_markup=InlineKeyboardMarkup(\par
+                paginate_modules(0, HELPABLE, "help")\par
+            ),\par
+            disable_web_page_preview=True,\par
+        )\par
+\par
+    elif create_match:\par
+        text, keyboard = await help_parser(query)\par
+        await query.message.edit(\par
+            text=text,\par
+            reply_markup=keyboard,\par
+            disable_web_page_preview=True,\par
+        )\par
+\par
+    return await client.answer_callback_query(query.id)\par
+\par
+\par
+if __name__ == "__main__":\par
+    loop.run_until_complete(initiate_bot())\par
+}
+ 
